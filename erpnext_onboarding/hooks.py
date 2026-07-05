@@ -31,7 +31,10 @@ fixtures = [
 # Apps
 # ------------------
 
-# required_apps = []
+# This app extends ERPNext (links to Customer / Item / Lead / Opportunity),
+# so ERPNext must be present. Declaring it makes `bench install-app` refuse
+# to install onto a site without ERPNext rather than failing later.
+required_apps = ["erpnext"]
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
