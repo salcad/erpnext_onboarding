@@ -19,24 +19,32 @@ STATE_CLOSED = "Closed"
 # arrives (UI form save, workflow action, REST PUT, RPC set_value).
 TRANSITIONS = {
 	(STATE_DRAFT, STATE_PENDING): frappe._dict(
+		action="Submit for Approval",
 		roles={"Sales Officer"},
 		require_items=True,
 	),
 	(STATE_PENDING, STATE_APPROVED): frappe._dict(
+		action="Approve",
 		roles={"Operations Manager"},
 		separation_of_duties=True,
 		require_items=True,
 		record_decision=True,
 	),
 	(STATE_PENDING, STATE_REJECTED): frappe._dict(
+		action="Reject",
 		roles={"Operations Manager"},
 		separation_of_duties=True,
 		require_reason=True,
 		record_decision=True,
 	),
-	(STATE_APPROVED, STATE_READY): frappe._dict(roles={"Operations Manager"}),
-	(STATE_READY, STATE_CLOSED): frappe._dict(roles={"Operations Manager"}),
+	(STATE_APPROVED, STATE_READY): frappe._dict(
+		action="Mark Ready", roles={"Operations Manager"}
+	),
+	(STATE_READY, STATE_CLOSED): frappe._dict(
+		action="Close", roles={"Operations Manager"}
+	),
 	(STATE_REJECTED, STATE_DRAFT): frappe._dict(
+		action="Reopen",
 		roles={"Sales Officer"},
 		clear_decision=True,
 	),
@@ -75,6 +83,18 @@ class OnboardingRequest(Document):
 		self.validate_line_values()
 		self.calculate_totals()
 		self.enforce_state_machine()
+
+	def on_update(self):
+		# Emit the audit row only after the save succeeds, so a validation
+		# failure downstream never leaves an orphan log entry. The pending
+		# transition was stashed by validate_transition during validate().
+		pending = self.flags.pop("pending_audit", None)
+		if pending:
+			from erpnext_onboarding.erpnext_onboarding.doctype.onboarding_audit_log.onboarding_audit_log import (
+				log_transition,
+			)
+
+			log_transition(self, **pending)
 
 	def on_trash(self):
 		if self.workflow_state != STATE_DRAFT:
@@ -195,6 +215,9 @@ class OnboardingRequest(Document):
 		if old_state in FROZEN_STATES:
 			self.assert_content_unchanged(old, TRANSITION_FIELDS)
 
+		# Capture the reason for the audit row before clear_decision may wipe it.
+		reason = cstr(self.decision_reason).strip() or None
+
 		if rule.get("record_decision"):
 			# Who decided and when is recorded server-side, never from input.
 			self.approved_by = user
@@ -206,6 +229,16 @@ class OnboardingRequest(Document):
 			self.approved_by = None
 			self.decided_on = None
 			self.decision_reason = None
+			reason = None
+
+		# Design rule 8: stash this transition so on_update writes exactly one
+		# audit row once the save succeeds.
+		self.flags.pending_audit = {
+			"from_state": old_state,
+			"to_state": new_state,
+			"action": rule.action,
+			"reason": reason,
+		}
 
 	# ------------------------------------------------------------------ #
 	# immutability                                                        #
