@@ -179,11 +179,12 @@
    "fieldtype": "Column Break"
   },
   {
-   "description": "Mandatory when rejecting. Copied into the audit log.",
+   "description": "Mandatory when rejecting. Copied into the audit log. Permlevel 1: only Operations Manager can write it.",
    "fieldname": "decision_reason",
    "fieldtype": "Small Text",
    "label": "Decision Reason",
-   "no_copy": 1
+   "no_copy": 1,
+   "permlevel": 1
   }
  ],
  "index_web_pages_for_search": 1,
@@ -206,6 +207,45 @@
    "role": "System Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Sales Officer",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Operations Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Operations Manager",
+   "write": 1
+  },
+  {
+   "permlevel": 1,
+   "read": 1,
+   "role": "Sales Officer"
   }
  ],
  "search_fields": "customer,customer_name,workflow_state",
