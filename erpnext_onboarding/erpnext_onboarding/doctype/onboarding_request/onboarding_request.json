@@ -1,0 +1,217 @@
+{
+ "actions": [],
+ "autoname": "format:ONB-{YYYY}-{#####}",
+ "creation": "2026-07-05 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "customer_section",
+  "customer",
+  "customer_name",
+  "column_break_crm",
+  "lead",
+  "opportunity",
+  "request_section",
+  "request_date",
+  "requested_by",
+  "column_break_request",
+  "workflow_state",
+  "items_section",
+  "items",
+  "totals_section",
+  "total_amount",
+  "column_break_totals",
+  "discount_amount",
+  "final_amount",
+  "decision_section",
+  "approved_by",
+  "decided_on",
+  "column_break_decision",
+  "decision_reason"
+ ],
+ "fields": [
+  {
+   "fieldname": "customer_section",
+   "fieldtype": "Section Break",
+   "label": "Customer"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Customer",
+   "options": "Customer",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fetch_from": "customer.customer_name",
+   "fieldname": "customer_name",
+   "fieldtype": "Data",
+   "label": "Customer Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_crm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Optional CRM origin of this request",
+   "fieldname": "lead",
+   "fieldtype": "Link",
+   "label": "Lead",
+   "options": "Lead"
+  },
+  {
+   "description": "Optional CRM origin of this request",
+   "fieldname": "opportunity",
+   "fieldtype": "Link",
+   "label": "Opportunity",
+   "options": "Opportunity"
+  },
+  {
+   "fieldname": "request_section",
+   "fieldtype": "Section Break",
+   "label": "Request"
+  },
+  {
+   "default": "Today",
+   "fieldname": "request_date",
+   "fieldtype": "Date",
+   "label": "Request Date",
+   "reqd": 1
+  },
+  {
+   "description": "Set automatically from the logged-in user",
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Requested By",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_request",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "workflow_state",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "no_copy": 1,
+   "options": "Draft\nPending Approval\nApproved\nRejected\nReady\nClosed",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "items_section",
+   "fieldtype": "Section Break",
+   "label": "Requested Packages"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Onboarding Request Item"
+  },
+  {
+   "fieldname": "totals_section",
+   "fieldtype": "Section Break",
+   "label": "Totals"
+  },
+  {
+   "description": "Sum of qty × rate before discounts. Computed server-side.",
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_totals",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Sum of line discounts. Computed server-side.",
+   "fieldname": "discount_amount",
+   "fieldtype": "Currency",
+   "label": "Discount Amount",
+   "read_only": 1
+  },
+  {
+   "bold": 1,
+   "description": "Total minus discounts. Computed server-side.",
+   "fieldname": "final_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Final Amount",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "decision_section",
+   "fieldtype": "Section Break",
+   "label": "Decision"
+  },
+  {
+   "description": "User who approved or rejected this request. Set by the workflow, never manually.",
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "label": "Approved / Rejected By",
+   "no_copy": 1,
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_on",
+   "fieldtype": "Datetime",
+   "label": "Decided On",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_decision",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Mandatory when rejecting. Copied into the audit log.",
+   "fieldname": "decision_reason",
+   "fieldtype": "Small Text",
+   "label": "Decision Reason",
+   "no_copy": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-07-05 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "ERPNext Onboarding",
+ "name": "Onboarding Request",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "search_fields": "customer,customer_name,workflow_state",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "customer_name",
+ "track_changes": 1
+}
