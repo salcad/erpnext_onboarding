@@ -1,0 +1,100 @@
+[
+ {
+  "doctype": "Workflow",
+  "name": "Onboarding Request Approval",
+  "workflow_name": "Onboarding Request Approval",
+  "document_type": "Onboarding Request",
+  "workflow_state_field": "workflow_state",
+  "is_active": 1,
+  "send_email_alert": 0,
+  "override_status": 0,
+  "states": [
+   {
+    "doctype": "Workflow Document State",
+    "state": "Draft",
+    "doc_status": "0",
+    "allow_edit": "Sales Officer"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "Pending Approval",
+    "doc_status": "0",
+    "allow_edit": "Operations Manager"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "Approved",
+    "doc_status": "0",
+    "allow_edit": "Operations Manager"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "Rejected",
+    "doc_status": "0",
+    "allow_edit": "Sales Officer"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "Ready",
+    "doc_status": "0",
+    "allow_edit": "Operations Manager"
+   },
+   {
+    "doctype": "Workflow Document State",
+    "state": "Closed",
+    "doc_status": "0",
+    "allow_edit": "Operations Manager"
+   }
+  ],
+  "transitions": [
+   {
+    "doctype": "Workflow Transition",
+    "state": "Draft",
+    "action": "Submit for Approval",
+    "next_state": "Pending Approval",
+    "allowed": "Sales Officer",
+    "allow_self_approval": 1
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "Pending Approval",
+    "action": "Approve",
+    "next_state": "Approved",
+    "allowed": "Operations Manager",
+    "allow_self_approval": 0
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "Pending Approval",
+    "action": "Reject",
+    "next_state": "Rejected",
+    "allowed": "Operations Manager",
+    "allow_self_approval": 0
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "Approved",
+    "action": "Mark Ready",
+    "next_state": "Ready",
+    "allowed": "Operations Manager",
+    "allow_self_approval": 1
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "Ready",
+    "action": "Close",
+    "next_state": "Closed",
+    "allowed": "Operations Manager",
+    "allow_self_approval": 1
+   },
+   {
+    "doctype": "Workflow Transition",
+    "state": "Rejected",
+    "action": "Reopen",
+    "next_state": "Draft",
+    "allowed": "Sales Officer",
+    "allow_self_approval": 1
+   }
+  ]
+ }
+]

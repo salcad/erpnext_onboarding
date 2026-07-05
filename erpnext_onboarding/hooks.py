@@ -5,6 +5,29 @@ app_description = "Client onboarding and storage-agreement approval workflow for
 app_email = "salamun.fajri.ok@gmail.com"
 app_license = "mit"
 
+# Fixtures
+# --------
+# Records shipped with (and re-synced by) this app on every `bench migrate`.
+# Filters keep the export limited to records owned by this app so a future
+# `bench export-fixtures` cannot pull in unrelated site data.
+# Note: roles are intentionally listed before the workflow that references them.
+fixtures = [
+	{"dt": "Role", "filters": [["name", "in", ["Sales Officer", "Operations Manager"]]]},
+	{
+		"dt": "Workflow State",
+		"filters": [
+			["name", "in", ["Draft", "Pending Approval", "Approved", "Rejected", "Ready", "Closed"]]
+		],
+	},
+	{
+		"dt": "Workflow Action Master",
+		"filters": [
+			["name", "in", ["Submit for Approval", "Approve", "Reject", "Mark Ready", "Close", "Reopen"]]
+		],
+	},
+	{"dt": "Workflow", "filters": [["name", "=", "Onboarding Request Approval"]]},
+]
+
 # Apps
 # ------------------
 
