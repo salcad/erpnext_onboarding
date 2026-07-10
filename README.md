@@ -83,12 +83,152 @@ Notes:
 - The site should have completed the ERPNext setup wizard (the app links to
   Customer and Item, whose default masters the wizard creates).
 
-### Dev environment used for this submission (optional detail)
+### Dev environment used for this submission (Docker)
 
 Developed on a containerized bench (official `frappe/bench` image with
 `mariadb:10.11` and `redis:6.2`), Frappe 15.113.4 / ERPNext 15.115.0,
 Python 3.12. Nothing in the app depends on Docker; it installs on any
-standard bench.
+standard bench. The full recipe, in case you want to reproduce the exact
+environment:
+
+#### The compose file
+
+The stack is a `docker-compose.yml` in the working folder that contains
+`frappe-bench/` (it lives outside this app repo — the app must stay
+infrastructure-free — so the full file is reproduced here):
+
+```yaml
+name: frappe-dev
+
+services:
+  frappe-db:
+    image: mariadb:10.11
+    container_name: frappe-db
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+    volumes:
+      - frappe-db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      retries: 12
+    restart: unless-stopped
+
+  frappe-redis:
+    image: redis:6.2-alpine
+    container_name: frappe-redis
+    restart: unless-stopped
+
+  frappe-bench-dev:
+    image: frappe/bench:latest
+    container_name: frappe-bench-dev
+    user: frappe
+    working_dir: /workspace
+    # serve the site if the bench exists; otherwise stay alive for `bench init`
+    command: >
+      bash -c "if [ -d /workspace/frappe-bench ];
+      then cd /workspace/frappe-bench && exec bench serve --port 8000;
+      else exec sleep infinity; fi"
+    volumes:
+      - .:/workspace
+    ports:
+      - "8000:8000"
+    depends_on:
+      frappe-db:
+        condition: service_healthy
+      frappe-redis:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  frappe-db-data:
+```
+
+Design notes: the service names double as DNS names, which is what
+`common_site_config.json` points at (`db_host: frappe-db`, Redis URLs);
+MariaDB data lives in the **named volume** `frappe-db-data` so it survives
+container removal; the working folder is bind-mounted at `/workspace`, so the
+bench itself lives on the host; and the dev container serves the site
+automatically when a bench exists, but degrades to an idle shell box on a
+pristine checkout so `bench init` can be run inside it.
+
+#### One-time creation
+
+```bash
+# host
+docker compose up -d
+
+# inside the dev container (docker exec -it -u frappe frappe-bench-dev bash)
+bench init --skip-redis-config-generation --frappe-branch version-15 \
+  --python /home/frappe/.pyenv/versions/3.12.12/bin/python3 frappe-bench
+cd frappe-bench
+bench set-config -g db_host frappe-db
+bench set-config -g redis_cache redis://frappe-redis:6379
+bench set-config -g redis_queue redis://frappe-redis:6379
+bench set-config -g redis_socketio redis://frappe-redis:6379
+bench get-app erpnext --branch version-15
+bench new-site dev.local --db-root-password admin --admin-password admin
+bench --site dev.local install-app erpnext
+bench get-app https://github.com/salcad/erpnext_onboarding
+bench --site dev.local install-app erpnext_onboarding
+
+# host: the container started in idle mode (no bench yet) — restart it so it serves
+docker compose restart frappe-bench-dev
+```
+
+#### Day-to-day start / stop
+
+```bash
+docker compose up -d      # start everything; the site serves itself
+docker compose stop       # shut down
+docker compose logs -f frappe-bench-dev   # tail the dev server
+```
+
+`bench` commands (migrate, console, worker, …) run inside the dev container:
+
+```bash
+docker exec -it -u frappe frappe-bench-dev bash -c \
+  "cd /workspace/frappe-bench && bench --site dev.local migrate"
+```
+
+#### Browser access
+
+Frappe resolves the site from the request hostname, so map the site name to
+loopback once:
+
+```bash
+echo "127.0.0.1 dev.local" | sudo tee -a /etc/hosts
+```
+
+Then open <http://dev.local:8000> and log in as `Administrator` / `admin`.
+(Plain `localhost:8000` returns 404 "localhost does not exist" — that is the
+hostname-based site resolution, not a broken install.)
+
+#### Recovery and troubleshooting
+
+- **Database lost** (the `frappe-db-data` named volume was deleted, or you are
+  rebuilding from scratch): restore the latest backup from
+  `sites/dev.local/private/backups/`, then re-sync the app's schema and
+  fixtures, which live in code, not in the backup:
+
+  ```bash
+  bench --site dev.local restore <backup>.sql.gz --db-root-password admin
+  bench --site dev.local migrate
+  ```
+
+  Take backups with `bench --site dev.local backup` — worth doing before any
+  container surgery, since only the bind-mounted bench directory lives on the
+  host; the database lives in the Docker volume.
+
+- **Port 8000 already in use** when starting the stack: check whether the
+  containers already exist under another Docker context
+  (`docker context ls`, then `docker --context default ps -a`). Docker Desktop
+  and the system engine keep separate container lists; starting the existing
+  set beats creating duplicates.
 
 ---
 
